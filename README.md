@@ -1,6 +1,6 @@
-# Release Rails
+# R-Release
 
-A simple node.js scraper app that simultaneously fetches releases from ruby on rails weblog site.
+A simple node.js scraper app that simultaneously fetches releases from ruby on rails weblog site and ruby-lang news.
 
 ## TODO
 

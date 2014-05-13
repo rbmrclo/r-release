@@ -6,8 +6,10 @@ var fs      = require('fs');
 var path    = require('path');
 var app     = express();
 
-var site_release_url = "http://weblog.rubyonrails.org/releases";
-var site_full_url = "http://weblog.rubyonrails.org"
+var rails_full_url = "http://weblog.rubyonrails.org"
+var rails_release_url = rails_full_url + "/releases";
+
+var ruby_news_url = "https://www.ruby-lang.org/en/news";
 
 app.configure(function(){
   app.set('port', process.env.PORT || 3003);
@@ -21,9 +23,23 @@ app.configure(function(){
   app.use(express.static(path.join(__dirname, 'views')));
 });
 
+// TODO: Refactor this
+
 app.get('/', function(req, res){
 
-  request(site_release_url, function (error, response, html) {
+  res.render('home', {
+    title: 'Releases',
+    items: [
+      { title: "Ruby", url: "/ruby"   },
+      { title: "Rails", url: "/rails" }
+    ]
+  });
+
+});
+  
+app.get('/rails', function(req, res){
+
+  request(rails_release_url, function (error, response, html) {
     if (!error && response.statusCode == 200) {
       var $ = cheerio.load(html);
       var parsedResults = [];
@@ -33,24 +49,53 @@ app.get('/', function(req, res){
 
         var metadata = {
           title: a.text(),
-          url: site_full_url + a.attr('href')
+          url: rails_full_url + a.attr('href')
         };
 
         parsedResults.push(metadata);
+      });
+
+      res.render('list', {
+        title: 'Rails',
+        items: parsedResults
       });
 
       // Alternative solution of putting parsed results in a json file and load it.
       // fs.writeFile('output.json', JSON.stringify(parsedResults, null, 4), function(err){
       //   console.log('File successfully written! - Check your project directory for the output.json file');
       // })
-
-      res.render('list', {
-        title: 'Release Me',
-        items: parsedResults
-      });
     }
   });
+});
 
+app.get('/ruby', function(req, res){
+  request(ruby_news_url, function (error, response, html) {
+    if (!error && response.statusCode == 200) {
+      var $ = cheerio.load(html);
+      var parsedResults = [];
+
+      $('.post').each(function (i, element){
+        var a = $(this).find('h3 a');
+
+        var metadata = {
+          title: a.text(),
+          url: ruby_news_url + a.attr('href')
+        };
+
+        parsedResults.push(metadata);
+      });
+
+      res.render('list', {
+        title: 'Ruby',
+        items: parsedResults
+      });
+
+      // Alternative solution of putting parsed results in a json file and load it.
+      // fs.writeFile('output.json', JSON.stringify(parsedResults, null, 4), function(err){
+      //   console.log('File successfully written! - Check your project directory for the output.json file');
+      // })
+    }
+  });
 });
 
 http.createServer(app).listen(app.get('port'), function(){
